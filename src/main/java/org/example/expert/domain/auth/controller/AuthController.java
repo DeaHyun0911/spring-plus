@@ -26,6 +26,7 @@ public class AuthController {
 
     @PostMapping("/auth/signin")
     public ResponseEntity<SigninResponse> signin(@Valid @RequestBody SigninRequest signinRequest) {
+
         return ResponseEntity.ok()
             .header(HttpHeaders.AUTHORIZATION, authService.signin(signinRequest).getBearerToken())
             .body(new SigninResponse(authService.signin(signinRequest).getBearerToken()));
