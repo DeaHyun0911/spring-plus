@@ -1,5 +1,8 @@
 package org.example.expert.domain.todo.service;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.example.expert.client.WeatherClient;
@@ -9,6 +12,7 @@ import org.example.expert.domain.todo.dto.request.TodoSaveRequest;
 import org.example.expert.domain.todo.dto.response.TodoResponse;
 import org.example.expert.domain.todo.dto.response.TodoSaveResponse;
 import org.example.expert.domain.todo.entity.Todo;
+import org.example.expert.domain.todo.repository.JpqlTodoRepository;
 import org.example.expert.domain.todo.repository.TodoRepository;
 import org.example.expert.domain.user.dto.response.UserResponse;
 import org.example.expert.domain.user.entity.User;
@@ -24,6 +28,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class TodoService {
 
     private final TodoRepository todoRepository;
+    private final JpqlTodoRepository jpqlTodoRepository;
     private final WeatherClient weatherClient;
 
     @Transactional
@@ -50,19 +55,17 @@ public class TodoService {
         );
     }
 
-    public Page<TodoResponse> getTodos(int page, int size, String weather) {
+    public Page<TodoResponse> getTodos(int page, int size, String weather, LocalDate startDate, LocalDate endDate) {
+
+        if(startDate.isAfter(endDate)) {
+            throw new InvalidRequestException("시작날짜는 마지막날짜보다 앞이여야 합니다.");
+        }
 
         Pageable pageable = PageRequest.of(page - 1, size);
-        Page<Todo> todos = null;
+        LocalDateTime start = startDate != null ? startDate.atStartOfDay() : null;
+        LocalDateTime end = endDate != null ? endDate.atTime(LocalTime.MAX) : null;
 
-        if(weather != null && !weather.isEmpty()) {
-            todos = todoRepository.findAllByWeatherContains(pageable, "%" + weather + "%");
-        }
-
-        if(weather == null || weather.isEmpty()) {
-            todos = todoRepository.findAllByOrderByModifiedAtDesc(pageable);
-        }
-
+        Page<Todo> todos = jpqlTodoRepository.findTodos(pageable, weather, start, end);
 
         return todos.map(todo -> new TodoResponse(
                 todo.getId(),
