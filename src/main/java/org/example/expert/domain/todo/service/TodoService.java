@@ -50,10 +50,19 @@ public class TodoService {
         );
     }
 
-    public Page<TodoResponse> getTodos(int page, int size) {
-        Pageable pageable = PageRequest.of(page - 1, size);
+    public Page<TodoResponse> getTodos(int page, int size, String weather) {
 
-        Page<Todo> todos = todoRepository.findAllByOrderByModifiedAtDesc(pageable);
+        Pageable pageable = PageRequest.of(page - 1, size);
+        Page<Todo> todos = null;
+
+        if(weather != null && !weather.isEmpty()) {
+            todos = todoRepository.findAllByWeatherContains(pageable, "%" + weather + "%");
+        }
+
+        if(weather == null || weather.isEmpty()) {
+            todos = todoRepository.findAllByOrderByModifiedAtDesc(pageable);
+        }
+
 
         return todos.map(todo -> new TodoResponse(
                 todo.getId(),
