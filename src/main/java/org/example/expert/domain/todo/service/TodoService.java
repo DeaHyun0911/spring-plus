@@ -12,7 +12,7 @@ import org.example.expert.domain.todo.dto.request.TodoSaveRequest;
 import org.example.expert.domain.todo.dto.response.TodoResponse;
 import org.example.expert.domain.todo.dto.response.TodoSaveResponse;
 import org.example.expert.domain.todo.entity.Todo;
-import org.example.expert.domain.todo.repository.JpqlTodoRepository;
+import org.example.expert.domain.todo.repository.JpaTodoRepository;
 import org.example.expert.domain.todo.repository.TodoRepository;
 import org.example.expert.domain.user.dto.response.UserResponse;
 import org.example.expert.domain.user.entity.User;
@@ -28,7 +28,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class TodoService {
 
     private final TodoRepository todoRepository;
-    private final JpqlTodoRepository jpqlTodoRepository;
+    private final JpaTodoRepository jpaTodoRepository;
     private final WeatherClient weatherClient;
 
     @Transactional
@@ -65,7 +65,7 @@ public class TodoService {
         LocalDateTime start = startDate != null ? startDate.atStartOfDay() : null;
         LocalDateTime end = endDate != null ? endDate.atTime(LocalTime.MAX) : null;
 
-        Page<Todo> todos = jpqlTodoRepository.findTodos(pageable, weather, start, end);
+        Page<Todo> todos = jpaTodoRepository.findTodos(pageable, weather, start, end);
 
         return todos.map(todo -> new TodoResponse(
                 todo.getId(),
@@ -79,7 +79,7 @@ public class TodoService {
     }
 
     public TodoResponse getTodo(long todoId) {
-        Todo todo = todoRepository.findByIdWithUser(todoId)
+        Todo todo = jpaTodoRepository.findByIdWithUser(todoId)
                 .orElseThrow(() -> new InvalidRequestException("Todo not found"));
 
         User user = todo.getUser();
