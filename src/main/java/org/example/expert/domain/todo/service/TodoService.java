@@ -21,6 +21,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 @Slf4j
 @Service
@@ -33,6 +34,7 @@ public class TodoService {
 
     @Transactional
     public TodoSaveResponse saveTodo(AuthUser authUser, TodoSaveRequest todoSaveRequest) {
+
         log.info("authUser: {}", authUser.getNickname());
         User user = User.fromAuthUser(authUser);
 
@@ -53,6 +55,7 @@ public class TodoService {
                 weather,
                 new UserResponse(user.getId(), user.getEmail(), user.getNickname())
         );
+
     }
 
     public Page<TodoResponse> getTodos(int page, int size, String weather, LocalDate startDate, LocalDate endDate) {
