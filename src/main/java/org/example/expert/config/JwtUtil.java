@@ -37,11 +37,15 @@ public class JwtUtil {
     public String createToken(Long userId, String email, String nickname, UserRole userRole) {
         Date date = new Date();
 
+        log.info("userId = {}",userId);
+        log.info("email = {}",email);
         log.info("nickname = {}", nickname);
+        log.info("userRole = {}",userRole);
 
         return BEARER_PREFIX +
                 Jwts.builder()
                         .setSubject(String.valueOf(userId))
+                        .claim("userId", userId)
                         .claim("email", email)
                         .claim("nickname", nickname)
                         .claim("userRole", userRole)

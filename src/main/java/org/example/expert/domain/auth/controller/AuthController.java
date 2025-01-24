@@ -24,7 +24,7 @@ public class AuthController {
         return authService.signup(signupRequest);
     }
 
-    @PostMapping("/auth/old-signin/")
+    @PostMapping("/auth/old-signin")
     public ResponseEntity<SigninResponse> signin(@Valid @RequestBody SigninRequest signinRequest) {
 
         return ResponseEntity.ok()

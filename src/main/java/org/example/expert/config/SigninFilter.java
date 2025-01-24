@@ -6,9 +6,10 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.example.expert.domain.auth.dto.request.SigninRequest;
+import org.example.expert.domain.auth.dto.request.CustomUserDatails;
+import org.example.expert.domain.user.entity.User;
+import org.example.expert.domain.user.enums.UserRole;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -19,10 +20,11 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 public class SigninFilter extends UsernamePasswordAuthenticationFilter {
 
     private final AuthenticationManager authenticationManager;
-    private final ObjectMapper objectMapper = new ObjectMapper();
+    private final JwtUtil jwtUtil;
 
-    public SigninFilter(AuthenticationManager authenticationManager) {
+    public SigninFilter(AuthenticationManager authenticationManager, JwtUtil jwtUtil) {
         this.authenticationManager = authenticationManager;
+        this.jwtUtil = jwtUtil;
         setFilterProcessesUrl("/auth/signin");
         setUsernameParameter("email");
     }
@@ -34,8 +36,6 @@ public class SigninFilter extends UsernamePasswordAuthenticationFilter {
         String email = obtainUsername(request);
         String password = obtainPassword(request);
 
-        log.info("email = {}" , email);
-        log.info("password = {}" , password);
 
         UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(email, password, null);
 
@@ -48,12 +48,24 @@ public class SigninFilter extends UsernamePasswordAuthenticationFilter {
         HttpServletResponse response, AuthenticationException failed)
         throws IOException, ServletException {
         log.info("Unsuccessful authentication: {}", failed.getMessage());
+
+
     }
 
     @Override
     protected void successfulAuthentication(HttpServletRequest request,
         HttpServletResponse response, FilterChain chain, Authentication authResult)
         throws IOException, ServletException {
-        log.info("Successful authentication: {}", authResult);
+
+        CustomUserDatails userDatails = (CustomUserDatails) authResult.getPrincipal();
+        User user = userDatails.getUser();
+
+        String jwtToken = jwtUtil.createToken(user.getId(), user.getEmail(), user.getNickname(), user.getUserRole());
+
+        response.setContentType("application/json; charset=UTF-8");
+        response.getWriter().write(String.format("{\"bearerToken\": \"%s\"}",
+            jwtToken));
+
+        response.addHeader("Authorization", jwtToken);
     }
 }

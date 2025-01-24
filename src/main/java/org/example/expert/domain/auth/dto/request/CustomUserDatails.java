@@ -13,6 +13,10 @@ public class CustomUserDatails implements UserDetails {
 
     private final User user;
 
+    public User getUser() {
+        return user;
+    }
+
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
 
@@ -37,6 +41,7 @@ public class CustomUserDatails implements UserDetails {
     public String getUsername() {
         return user.getEmail();
     }
+
 
     @Override
     public boolean isAccountNonExpired() {

@@ -8,11 +8,19 @@ import jakarta.servlet.FilterConfig;
 import jakarta.servlet.*;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.example.expert.domain.common.dto.AuthUser;
 import org.example.expert.domain.user.enums.UserRole;
 
 import java.io.IOException;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -55,22 +63,23 @@ public class JwtFilter implements Filter {
                 return;
             }
 
-            UserRole userRole = UserRole.valueOf(claims.get("userRole", String.class));
 
-            httpRequest.setAttribute("userId", Long.parseLong(claims.getSubject()));
-            httpRequest.setAttribute("email", claims.get("email"));
-            httpRequest.setAttribute("nickname", claims.get("nickname"));
-            httpRequest.setAttribute("userRole", claims.get("userRole"));
+            Long userId = claims.get("userId", Long.class);
+            String email = claims.get("email", String.class);
+            String nickname = claims.get("nickname", String.class);
+            UserRole userRole = UserRole.of(claims.get("userRole", String.class));
 
-            if (url.startsWith("/admin")) {
-                // 관리자 권한이 없는 경우 403을 반환합니다.
-                if (!UserRole.ADMIN.equals(userRole)) {
-                    httpResponse.sendError(HttpServletResponse.SC_FORBIDDEN, "관리자 권한이 없습니다.");
-                    return;
-                }
-                chain.doFilter(request, response);
-                return;
-            }
+            log.info("userId: {}, email: {}, nickname: {}", userId, email, nickname);
+
+            AuthUser authUser = new AuthUser(userId, email, nickname, userRole);
+
+            List<GrantedAuthority> authorities = List.of(new SimpleGrantedAuthority("ROLE_" + userRole.name()));
+
+            UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(authUser, null, authorities);
+
+            log.info("Setting Authentication: {}", authenticationToken);
+            SecurityContextHolder.getContext().setAuthentication(authenticationToken);
+            log.info("Authentication in SecurityContext: {}", SecurityContextHolder.getContext().getAuthentication());
 
             chain.doFilter(request, response);
         } catch (SecurityException | MalformedJwtException e) {

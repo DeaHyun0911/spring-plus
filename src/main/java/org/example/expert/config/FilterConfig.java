@@ -38,11 +38,13 @@ public class FilterConfig {
             .httpBasic((auth) -> auth.disable())
             .authorizeHttpRequests((auth) ->
                 auth.requestMatchers("/auth/**").permitAll()
+                    .requestMatchers("/admin/**").hasRole("ADMIN")
                     .anyRequest().authenticated()
             )
             .sessionManagement(session -> session
                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-            .addFilterAt(new SigninFilter(authenticationManager(authenticationConfiguration)), UsernamePasswordAuthenticationFilter.class);
+            .addFilterBefore(new JwtFilter(jwtUtil), UsernamePasswordAuthenticationFilter.class)
+            .addFilterAt(new SigninFilter(authenticationManager(authenticationConfiguration), jwtUtil), UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
